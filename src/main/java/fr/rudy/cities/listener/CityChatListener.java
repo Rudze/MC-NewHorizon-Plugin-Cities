@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.util.*;
 
@@ -24,7 +25,17 @@ public class CityChatListener implements Listener {
 
     private final CityManager cityManager = Main.get().getCityManager();
     private final CityBankManager cityBankManager = Main.get().getCityBankManager();
-    private final Economy vaultEconomy = Bukkit.getServicesManager().getRegistration(Economy.class).getProvider();
+    private final Economy vaultEconomy;
+
+    public CityChatListener() {
+        RegisteredServiceProvider<Economy> provider = Bukkit.getServicesManager().getRegistration(Economy.class);
+        if (provider == null) {
+            Bukkit.getLogger().severe("❌ Vault non trouvé ou non prêt : l'économie de ville est désactivée.");
+            vaultEconomy = null;
+        } else {
+            vaultEconomy = provider.getProvider();
+        }
+    }
 
     @EventHandler
     public void onChat(AsyncPlayerChatEvent event) {
@@ -32,24 +43,25 @@ public class CityChatListener implements Listener {
         UUID uuid = player.getUniqueId();
         String msg = ChatColor.stripColor(event.getMessage()).trim();
 
-        // ⛔ Annuler avec "quitter"
         if (msg.equalsIgnoreCase("quitter")) {
             if (waitingForCityName.containsKey(uuid)) {
                 waitingForCityName.remove(uuid);
                 cityCreationMode.remove(uuid);
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cCréation annulée."));
+                player.sendMessage(ChatColor.RED + "Création annulée.");
             }
             if (awaitingDeposit.remove(uuid)) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cDépôt annulé."));
+                player.sendMessage(ChatColor.RED + "Dépôt annulé.");
             }
             if (awaitingWithdraw.remove(uuid)) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cRetrait annulé."));
+                player.sendMessage(ChatColor.RED + "Retrait annulé.");
             }
             event.setCancelled(true);
             return;
         }
 
-        // 🏦 Dépôt
+        if (vaultEconomy == null) return;
+
+        // 💰 Dépôt
         if (awaitingDeposit.contains(uuid)) {
             event.setCancelled(true);
             awaitingDeposit.remove(uuid);
@@ -57,25 +69,25 @@ public class CityChatListener implements Listener {
             try {
                 double amount = Double.parseDouble(msg);
                 if (amount <= 0) {
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cMontant invalide."));
+                    player.sendMessage(ChatColor.RED + "Montant invalide.");
                     return;
                 }
 
                 if (!vaultEconomy.has(player, amount)) {
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cVous n'avez pas assez de pièces."));
+                    player.sendMessage(ChatColor.RED + "Fonds insuffisants.");
                     return;
                 }
 
                 int cityId = cityManager.getCityId(uuid);
                 if (cityBankManager.deposit(cityId, amount)) {
                     vaultEconomy.withdrawPlayer(player, amount);
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bVous avez déposé &d" + amount + " &bpièces dans la banque de votre ville !"));
+                    player.sendMessage(ChatColor.AQUA + "Déposé: " + ChatColor.LIGHT_PURPLE + amount + " pièces");
                 } else {
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cErreur lors du dépôt."));
+                    player.sendMessage(ChatColor.RED + "Erreur lors du dépôt.");
                 }
 
             } catch (NumberFormatException e) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cVeuillez entrer un montant valide."));
+                player.sendMessage(ChatColor.RED + "Montant invalide.");
             }
             return;
         }
@@ -88,25 +100,25 @@ public class CityChatListener implements Listener {
             try {
                 double amount = Double.parseDouble(msg);
                 if (amount <= 0) {
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cMontant invalide."));
+                    player.sendMessage(ChatColor.RED + "Montant invalide.");
                     return;
                 }
 
                 int cityId = cityManager.getCityId(uuid);
                 if (cityBankManager.withdraw(cityId, amount)) {
                     vaultEconomy.depositPlayer(player, amount);
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bVous avez retiré &d" + amount + " &bpièces de la banque de la ville !"));
+                    player.sendMessage(ChatColor.AQUA + "Retiré: " + ChatColor.LIGHT_PURPLE + amount + " pièces");
                 } else {
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cFonds insuffisants dans la banque de la ville."));
+                    player.sendMessage(ChatColor.RED + "Fonds insuffisants dans la banque de la ville.");
                 }
 
             } catch (NumberFormatException e) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cVeuillez entrer un montant valide."));
+                player.sendMessage(ChatColor.RED + "Montant invalide.");
             }
             return;
         }
 
-        // 🏙️ Nom de ville
+        // 📛 Création ou modification du nom de la ville
         if (!waitingForCityName.containsKey(uuid)) return;
 
         event.setCancelled(true);
@@ -115,44 +127,39 @@ public class CityChatListener implements Listener {
 
         if (cityCreationMode.remove(uuid)) {
             if (cityManager.getCityLocation(cityName) != null) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cUne ville avec ce nom existe déjà."));
+                player.sendMessage(ChatColor.RED + "Une ville avec ce nom existe déjà.");
                 return;
             }
 
             if (!location.getWorld().getName().equalsIgnoreCase("world_newhorizon")) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                        "&cVous ne pouvez pas créer votre ville ici. Rendez-vous dans la zone Survie en parlant au Capitaine Jack."));
+                player.sendMessage(ChatColor.RED + "Créez votre ville dans la zone Survie (via Capitaine Jack).");
                 return;
             }
 
             if (cityManager.createCity(uuid, cityName, location)) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                        "&bVille &d" + cityName + " &bcréée avec succès ! Vous êtes le chef 👑"));
+                player.sendMessage(ChatColor.AQUA + "Ville créée: " + ChatColor.LIGHT_PURPLE + cityName);
             } else {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                        "&cErreur lors de la création de la ville."));
+                player.sendMessage(ChatColor.RED + "Erreur lors de la création.");
             }
-
-
 
         } else {
             String currentCity = cityManager.getCityName(uuid);
             CityRank rank = cityManager.getCityRank(uuid);
 
             if (currentCity == null || rank == null) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cVous n'appartenez à aucune ville."));
+                player.sendMessage(ChatColor.RED + "Vous n'appartenez à aucune ville.");
                 return;
             }
 
             if (!(rank == CityRank.LEADER || rank == CityRank.COLEADER)) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cSeul le chef ou le sous-chef peut modifier le spawn."));
+                player.sendMessage(ChatColor.RED + "Seul le chef ou le sous-chef peut modifier le spawn.");
                 return;
             }
 
             if (cityManager.updateCitySpawn(currentCity, location)) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&bSpawn de votre ville &d" + currentCity + " &bmis à jour !"));
+                player.sendMessage(ChatColor.AQUA + "Spawn de la ville mis à jour !");
             } else {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&cErreur lors de la mise à jour du spawn."));
+                player.sendMessage(ChatColor.RED + "Erreur lors de la mise à jour du spawn.");
             }
         }
     }

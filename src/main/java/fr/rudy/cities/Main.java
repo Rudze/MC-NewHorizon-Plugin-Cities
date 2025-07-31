@@ -44,18 +44,27 @@ public class Main extends JavaPlugin implements CitiesAPI {
         setupManagers();
         setupTables();
         registerCommands();
-        registerListeners();
 
-        // ✅ Enregistrement de l'API CitiesAPI via le ServiceManager
-        Bukkit.getServicesManager().register(CitiesAPI.class, this, this, ServicePriority.Normal);
+        // On attend 1 tick pour que Vault soit entièrement chargé
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (!setupEconomy()) {
+                getLogger().warning("❌ Vault non trouvé ou provider non prêt : l'économie de ville est désactivée.");
+            } else {
+                Bukkit.getPluginManager().registerEvents(new CityChatListener(), this);
+                getLogger().info("✅ Système de chat de ville activé !");
+            }
 
-        getLogger().info("✅ CityPlugin activé !");
+            registerListeners(); // les autres listeners
+            Bukkit.getServicesManager().register(CitiesAPI.class, this, this, ServicePriority.Normal);
+            getLogger().info("✅ CityPlugin activé !");
+        }, 1L);
     }
+
 
     @Override
     public void onDisable() {
         Bukkit.getServicesManager().unregister(CitiesAPI.class, this);
-        getLogger().info("🛑 CityPlugin désactivé proprement.");
+        //getLogger().info("🛑 CityPlugin désactivé proprement.");
     }
 
     private void setupManagers() {
@@ -70,7 +79,13 @@ public class Main extends JavaPlugin implements CitiesAPI {
     }
 
     private void registerListeners() {
-        Bukkit.getPluginManager().registerEvents(new CityChatListener(), this);
+        if (getServer().getPluginManager().getPlugin("Vault") != null && setupEconomy()) {
+            getServer().getPluginManager().registerEvents(new CityChatListener(), this);
+            //getLogger().info("✅ Système de chat de ville activé !");
+        } else {
+            getLogger().warning("❌ Vault non trouvé. Le chat économique est désactivé.");
+        }
+
         Bukkit.getPluginManager().registerEvents(new CityInviteListener(), this);
         Bukkit.getPluginManager().registerEvents(new ChunkProtectionListener(), this);
         Bukkit.getPluginManager().registerEvents(new CityEnterListener(), this);
@@ -122,4 +137,11 @@ public class Main extends JavaPlugin implements CitiesAPI {
     public Map<UUID, String> getPendingInvites() {
         return pendingInvites;
     }
+
+    private boolean setupEconomy() {
+        var rsp = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+        return rsp != null && rsp.getProvider() != null;
+    }
+
+
 }

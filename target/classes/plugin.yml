@@ -1,5 +1,5 @@
 name: Cities
-version: '1.1'
+version: '1.2'
 main: fr.rudy.cities.Main
 api-version: '1.21'
 depend: [DataBaseAPI, Vault, WorldGuard]
