@@ -90,7 +90,6 @@ public class Main extends JavaPlugin implements CitiesAPI {
         Bukkit.getPluginManager().registerEvents(new ChunkProtectionListener(), this);
         Bukkit.getPluginManager().registerEvents(new CityEnterListener(), this);
         Bukkit.getPluginManager().registerEvents(new CityGUIListener(), this);
-        Bukkit.getPluginManager().registerEvents(new RaidTriggerListener(), this);
     }
 
     private void setupTables() {

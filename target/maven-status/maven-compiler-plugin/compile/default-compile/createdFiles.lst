@@ -1,9 +1,7 @@
 fr\rudy\cities\commands\CityAdminCommand.class
 fr\rudy\cities\manager\CityManager.class
-fr\rudy\cities\listener\RaidTriggerListener.class
 fr\rudy\cities\manager\CityBankManager.class
 fr\rudy\cities\listener\ChunkProtectionListener.class
-fr\rudy\cities\listener\RaidTriggerListener$1.class
 fr\rudy\cities\manager\ClaimManager.class
 fr\rudy\cities\listener\CityInviteListener.class
 fr\rudy\cities\commands\CityCommand.class
