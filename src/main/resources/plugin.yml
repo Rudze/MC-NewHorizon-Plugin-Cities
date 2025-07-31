@@ -1,0 +1,16 @@
+name: cities
+version: '1.0'
+main: fr.rudy.cities.Main
+api-version: '1.21'
+depend: [DataBaseAPI, Vault, WorldGuard]
+
+commands:
+  city:
+    description: Gère ta ville (create, setspawn, tp, like...)
+    usage: /city <create|setspawn|tp|remove|like|info|leave>
+
+  cityadmin:
+    description: Commande admin pour gérer les villes
+    usage: /cityadmin <subcommand>
+    permission: newhorizon.city.admin
+    permission-message: §cVous n'avez pas la permission.
