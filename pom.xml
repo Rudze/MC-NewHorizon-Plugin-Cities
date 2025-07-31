@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>fr.rudy</groupId>
-    <artifactId>cities</artifactId>
-    <version>1.0</version>
+    <artifactId>Cities</artifactId>
+    <version>1.1</version>
     <packaging>jar</packaging>
 
-    <name>cities</name>
+    <name>Cities</name>
 
     <properties>
         <java.version>21</java.version>
