@@ -11,6 +11,7 @@ import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.BannerMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.io.BukkitObjectInputStream;
+import me.clip.placeholderapi.PlaceholderAPI;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,7 +33,8 @@ public class CityGUI {
     }
 
     public void openCityList(Player player) {
-        Inventory gui = Bukkit.createInventory(null, GUI_SIZE, ":offset_-48::phone_menu::offset_-251::citylist_menu:");
+        String title = PlaceholderAPI.setPlaceholders(player, "%nexo_shift_-48%<glyph:citylist>");
+        Inventory gui = Bukkit.createInventory(null, GUI_SIZE, title);
 
         UUID uuid = player.getUniqueId();
         boolean inCity = cityManager.getCityName(uuid) != null;
@@ -83,7 +85,7 @@ public class CityGUI {
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(name);
         meta.setLore(Arrays.asList(lore));
-        meta.setCustomModelData(10077);
+        meta.setCustomModelData(10233);
         item.setItemMeta(meta);
         return item;
     }

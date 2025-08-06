@@ -3,6 +3,7 @@ version: '1.2'
 main: fr.rudy.cities.Main
 api-version: '1.21'
 depend: [DataBaseAPI, Vault, WorldGuard]
+softdepend: [PlaceholderAPI]
 
 commands:
   city:

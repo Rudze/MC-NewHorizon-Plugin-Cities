@@ -11,6 +11,7 @@ fr\rudy\cities\manager\CityManager$2.class
 fr\rudy\cities\api\CitiesAPI.class
 fr\rudy\cities\ui\CityGUI$CityEntry.class
 fr\rudy\cities\manager\CityManager$1.class
+fr\rudy\cities\ui\CityManageInventoryHolder.class
 fr\rudy\cities\ui\CityGUI.class
 fr\rudy\cities\ui\CityGUIListener.class
 fr\rudy\cities\ui\CityManageGUI.class
